@@ -43,11 +43,12 @@ int main(int _argc, char** _argv){
         std::cout << "Error opening camera" << std::endl;
         return -1;
     }else{
-        //cv::Mat img = cv::imread(file, -1);
+        //cv::Mat img = cv::imread("/home/bardo91/programing/3rdparty/darknet/data/tools565/JPEGImages/image_00020.jpg");
         cv::Mat img;
         while(true){
             cap.grab();
             cap >> img;
+            //img = cv::imread("/home/bardo91/programing/3rdparty/darknet/data/tools565/JPEGImages/image_00020.jpg");
             std::vector<vector<float> > detections = detector.detect(img);
 
             /* Print the detection results. */
@@ -62,12 +63,16 @@ int main(int _argc, char** _argv){
                     int x1 = d[5] * img.cols;
                     int y1 = d[6] * img.rows;
 
-                    if(x0 > 0 && y0 > 0 && x1 < img.cols && y1 < img.rows){
-                        cv::rectangle(img, cv::Rect(x0, y0, x1-x0, y1-y0),cv::Scalar(0,255,0), 3);
-                        cv::putText(img, std::to_string(score),cv::Point(x0, y0+10),CV_FONT_HERSHEY_PLAIN,1,cv::Scalar(0,255,0));
-                        std::string label = (d[1] == 0? "plier":(d[1]==1?"wrench":"screwDriver"));
-                        cv::putText(img, label,cv::Point(x0, y0+20),CV_FONT_HERSHEY_PLAIN,1,cv::Scalar(0,255,0));
-                    }
+                    x0 = x0<0?0:x0;
+                    y0 = y0<0?0:y0;
+                    x1 = x1 > img.cols? img.cols :x1;
+                    y1 = y1 > img.rows? img.rows:y1;
+
+                    cv::rectangle(img, cv::Rect(x0, y0, x1-x0, y1-y0),cv::Scalar(0,255,0), 3);
+                    cv::putText(img, std::to_string(score),cv::Point(x0, y0+10),CV_FONT_HERSHEY_PLAIN,1,cv::Scalar(0,255,0));
+                    std::string label = (d[1] == 0? "plier":(d[1]==1?"wrench":"screwDriver"));
+                    cv::putText(img, label,cv::Point(x0, y0+20),CV_FONT_HERSHEY_PLAIN,1,cv::Scalar(0,255,0));
+
                 }
             }
             cv::imshow("detection", img);

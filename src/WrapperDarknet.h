@@ -14,6 +14,7 @@
 #endif
 extern "C" {
     #include "network.h"
+    #include "darknet/src/image.h"
 }
 
 extern "C" void darknetPrepareNetwork(char *_model, char *_weights, network *_net);
