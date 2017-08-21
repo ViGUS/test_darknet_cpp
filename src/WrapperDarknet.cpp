@@ -8,23 +8,6 @@
 #include "WrapperDarknet.h"
 
 
-extern "C" void darknetPrepareNetwork(char * _model, char * _weights, network *_net) {
-
-    cuda_set_device(0);
-
-    *_net = parse_network_cfg(_model);
-    load_weights(_net, _weights);
-
-
-    set_batch_network(_net, 1);
-}
-
-extern "C" void darknetDetect(network *_net, image _im) {
-
-
-}
-
-
 WrapperDarknet::WrapperDarknet(std::string mModelFile, std::string mWeightsFile) {
     char *wStr1= new char[mModelFile.size() + 1];
     char *wStr2= new char[mWeightsFile.size() + 1];
@@ -35,7 +18,13 @@ WrapperDarknet::WrapperDarknet(std::string mModelFile, std::string mWeightsFile)
     wStr1[mModelFile.size()] = '\0';
     wStr2[mWeightsFile.size()] = '\0';
 
-    darknetPrepareNetwork(wStr1, wStr2, &mNet);
+    cuda_set_device(0);
+
+    mNet = parse_network_cfg(wStr1);
+    load_weights(&mNet, wStr2);
+
+
+    set_batch_network(&mNet, 1);
 
     delete[] wStr1;
     delete[] wStr2;

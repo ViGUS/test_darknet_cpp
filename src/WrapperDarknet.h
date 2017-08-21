@@ -17,9 +17,6 @@ extern "C" {
     #include "darknet/src/image.h"
 }
 
-extern "C" void darknetPrepareNetwork(char *_model, char *_weights, network *_net);
-extern "C" void darknetDetect(network *_net, image im);
-
 class WrapperDarknet{
 public:
     WrapperDarknet(std::string mModelFile, std::string mWeightsFile);
