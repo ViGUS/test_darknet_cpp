@@ -55,7 +55,9 @@ std::vector<std::vector<float> > WrapperDarknet::detect(const cv::Mat &img) {
     image im = make_image(w, h, c);
     int i, j, k;
 
+    #pragma omp parallel for
     for(i = 0; i < h; ++i){
+        #pragma omp parallel for
         for(k= 0; k < c; ++k){
             for(j = 0; j < w; ++j){
                 im.data[k*w*h + i*w + j] = data[i*step + j*c + k]/255.;
