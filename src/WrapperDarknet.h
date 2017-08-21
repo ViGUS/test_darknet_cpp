@@ -26,5 +26,7 @@ public:
 private:
     list *mOptions;
     network mNet;
+    box *mBoxes;
+    float **mProbs;
 };
 

@@ -29,6 +29,11 @@ WrapperDarknet::WrapperDarknet(std::string mModelFile, std::string mWeightsFile)
     delete[] wStr1;
     delete[] wStr2;
 
+    layer l = mNet.layers[mNet.n-1];
+
+    mBoxes = (box*) calloc(l.w*l.h*l.n, sizeof(box));
+    mProbs = (float**)calloc(l.w*l.h*l.n, sizeof(float *));
+
 }
 
 std::vector<std::vector<float> > WrapperDarknet::detect(const cv::Mat &img) {
@@ -56,9 +61,7 @@ std::vector<std::vector<float> > WrapperDarknet::detect(const cv::Mat &img) {
     image sized = letterbox_image(im, mNet.w, mNet.h);
     layer l = mNet.layers[mNet.n-1];
 
-    box *boxes = (box*) calloc(l.w*l.h*l.n, sizeof(box));
-    float **probs = (float**)calloc(l.w*l.h*l.n, sizeof(float *));
-    for(int j = 0; j < l.w*l.h*l.n; ++j) probs[j] = (float *) calloc(l.classes + 1, sizeof(float *));
+    for(int j = 0; j < l.w*l.h*l.n; ++j) mProbs[j] = (float *) calloc(l.classes + 1, sizeof(float *));
     float **masks = 0;
     if (l.coords > 4){
         masks = (float**) calloc(l.w*l.h*l.n, sizeof(float*));
@@ -69,9 +72,9 @@ std::vector<std::vector<float> > WrapperDarknet::detect(const cv::Mat &img) {
     network_predict(mNet, X);
     float thresh = 0.24;
     float hier_thresh = 0.5;
-    get_region_boxes(l, im.w, im.h, mNet.w, mNet.h, thresh, probs, boxes, masks, 0, 0, hier_thresh, 1);
+    get_region_boxes(l, im.w, im.h, mNet.w, mNet.h, thresh, mProbs, mBoxes, masks, 0, 0, hier_thresh, 1);
     float nms=0.3f;
-    if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
+    if (nms) do_nms_obj(mBoxes, mProbs, l.w*l.h*l.n, l.classes, nms);
 
 
 
@@ -81,13 +84,13 @@ std::vector<std::vector<float> > WrapperDarknet::detect(const cv::Mat &img) {
         std::vector<float> imgRes = {0};
         // Detection format: [image_id, label, score, xmin, ymin, xmax, ymax].
 
-        int classi = max_index(probs[i], l.classes);
-        float prob = probs[i][classi];
+        int classi = max_index(mProbs[i], l.classes);
+        float prob = mProbs[i][classi];
         if(prob > thresh){
             imgRes.push_back(classi);
             imgRes.push_back(prob);
 
-            box b = boxes[i];
+            box b = mBoxes[i];
             float left  = (b.x-b.w/2.);
             float top   = (b.y-b.h/2.);
             float right = (b.x+b.w/2.);
@@ -103,8 +106,6 @@ std::vector<std::vector<float> > WrapperDarknet::detect(const cv::Mat &img) {
 
     //free_image(im);
     free_image(sized);
-    free(boxes);
-    free_ptrs((void **)probs, l.w*l.h*l.n);
 
     return result;
 }
