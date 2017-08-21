@@ -33,6 +33,12 @@ WrapperDarknet::WrapperDarknet(std::string mModelFile, std::string mWeightsFile)
 
     mBoxes = (box*) calloc(l.w*l.h*l.n, sizeof(box));
     mProbs = (float**)calloc(l.w*l.h*l.n, sizeof(float *));
+    for(int j = 0; j < l.w*l.h*l.n; ++j) mProbs[j] = (float *) calloc(l.classes + 1, sizeof(float *));
+    mMasks = 0;
+    if (l.coords > 4){
+        mMasks = (float**) calloc(l.w*l.h*l.n, sizeof(float*));
+        for(int j = 0; j < l.w*l.h*l.n; ++j) mMasks[j] = (float*) calloc(l.coords-4, sizeof(float *));
+    }
 
 }
 
@@ -61,18 +67,13 @@ std::vector<std::vector<float> > WrapperDarknet::detect(const cv::Mat &img) {
     image sized = letterbox_image(im, mNet.w, mNet.h);
     layer l = mNet.layers[mNet.n-1];
 
-    for(int j = 0; j < l.w*l.h*l.n; ++j) mProbs[j] = (float *) calloc(l.classes + 1, sizeof(float *));
-    float **masks = 0;
-    if (l.coords > 4){
-        masks = (float**) calloc(l.w*l.h*l.n, sizeof(float*));
-        for(int j = 0; j < l.w*l.h*l.n; ++j) masks[j] = (float*) calloc(l.coords-4, sizeof(float *));
-    }
+
 
     float *X = sized.data;
     network_predict(mNet, X);
     float thresh = 0.24;
     float hier_thresh = 0.5;
-    get_region_boxes(l, im.w, im.h, mNet.w, mNet.h, thresh, mProbs, mBoxes, masks, 0, 0, hier_thresh, 1);
+    get_region_boxes(l, im.w, im.h, mNet.w, mNet.h, thresh, mProbs, mBoxes, mMasks, 0, 0, hier_thresh, 1);
     float nms=0.3f;
     if (nms) do_nms_obj(mBoxes, mProbs, l.w*l.h*l.n, l.classes, nms);
 

@@ -28,5 +28,6 @@ private:
     network mNet;
     box *mBoxes;
     float **mProbs;
+    float **mMasks;
 };
 
